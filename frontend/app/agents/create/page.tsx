@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import api from '../../../services/api';
+// import api from '../../../services/api';
 
 // Define the form state type
 interface AgentFormState {
@@ -130,11 +130,19 @@ export default function CreateAgentPage() {
       delete (agentData as any).custom_provider_id;
 
       // Send the data to the API
-      const response = await api.post('/agents', agentData);
+      const response = await fetch('/api/agents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(agentData),
+      });
 
-      if (!response.data) {
+      if (!response.ok) {
         throw new Error('Failed to create agent');
       }
+
+      const data = await response.json();
 
       // Navigate back to the agents page
       router.push('/agents');
