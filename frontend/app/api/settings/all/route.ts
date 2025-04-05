@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// In Docker, we need to use the service name instead of localhost
-const API_URL = 'http://backend:8000/api';
+// Use localhost for client-side API routes
+const API_URL = 'http://localhost:8000/api';
 
 export async function GET(request: NextRequest) {
   try {
