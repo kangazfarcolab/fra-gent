@@ -88,8 +88,8 @@ export async function DELETE(
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    // For 204 No Content responses, just return a success message
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting agent:', error);
     return NextResponse.json(
