@@ -33,3 +33,6 @@ class Agent(Base):
 
     # Relationships
     memories = relationship("Memory", back_populates="agent", cascade="all, delete-orphan")
+    knowledge_bases = relationship("KnowledgeBase", back_populates="agent", cascade="all, delete-orphan")
+    task_templates = relationship("TaskTemplate", back_populates="agent", cascade="all, delete-orphan")
+    preferences = relationship("Preference", back_populates="agent", cascade="all, delete-orphan")

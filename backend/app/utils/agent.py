@@ -3,7 +3,7 @@ Utility functions for working with agents.
 """
 
 import logging
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
@@ -18,6 +18,7 @@ async def generate_agent_response(
     agent: Agent,
     message: str,
     conversation_history: Optional[List[Memory]] = None,
+    context: Optional[Dict[str, Any]] = None,
     db = None,
 ) -> str:
     """
@@ -27,6 +28,7 @@ async def generate_agent_response(
         agent: The agent to generate a response from.
         message: The message to respond to.
         conversation_history: The conversation history to use for context.
+        context: Additional context for the agent.
         db: The database session to use for retrieving settings.
 
     Returns:
@@ -54,12 +56,52 @@ async def generate_agent_response(
     # Format the messages
     messages = []
 
+    # Prepare enhanced system prompt with context
+    system_prompt = agent.system_prompt or ""
+
+    # Add context to system prompt if available
+    if context:
+        # Add agent personality and bio
+        if agent.personality or agent.bio:
+            system_prompt += f"\n\nYour personality: {agent.personality}\nYour bio: {agent.bio}"
+
+        # Add knowledge
+        if context.get("knowledge"):
+            system_prompt += "\n\nYou have the following knowledge:\n"
+            for item in context["knowledge"]:
+                system_prompt += f"- {item['name']}: {item['content']}\n"
+
+        # Add preferences
+        if context.get("preferences"):
+            system_prompt += "\n\nYou have the following preferences:\n"
+            for key, value in context["preferences"].items():
+                system_prompt += f"- {key}: {value}\n"
+
+        # Add task template if available
+        if context.get("task_template"):
+            template = context["task_template"]
+            system_prompt += f"\n\nFor tasks of type '{template['task_type']}', follow these steps:\n"
+            for i, step in enumerate(template["steps"]):
+                system_prompt += f"{i+1}. {step}\n"
+
+            if template.get("examples"):
+                system_prompt += "\nExamples:\n"
+                for example in template["examples"]:
+                    system_prompt += f"- Input: {example['input']}\n  Output: {example['output']}\n"
+
     # Add conversation history if available
     if conversation_history:
         for memory in conversation_history:
             messages.append({
                 "role": memory.role,
                 "content": memory.content,
+            })
+    elif context and context.get("memories"):
+        # Use memories from context if no conversation history is provided
+        for memory in context["memories"]:
+            messages.append({
+                "role": memory["role"],
+                "content": memory["content"],
             })
 
     # Add the current message
@@ -70,7 +112,7 @@ async def generate_agent_response(
 
     # Format the messages for the chat model
     formatted_messages = format_messages(
-        system_prompt=agent.system_prompt,
+        system_prompt=system_prompt,
         messages=messages,
     )
 
