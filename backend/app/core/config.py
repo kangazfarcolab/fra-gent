@@ -6,7 +6,7 @@ import os
 import secrets
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import AnyHttpUrl, PostgresDsn, validator
+from pydantic import AnyHttpUrl, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -38,15 +38,20 @@ class Settings(BaseSettings):
     POSTGRES_PORT: str = "5432"
     DATABASE_URL: Optional[str] = None
 
-    @validator("DATABASE_URL", pre=True)
-    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+    @field_validator("DATABASE_URL", mode="before")
+    def assemble_db_connection(cls, v: Optional[str], info) -> Any:
         if isinstance(v, str):
             return v
+        values = info.data
         return f"postgresql+asyncpg://{values.get('POSTGRES_USER')}:{values.get('POSTGRES_PASSWORD')}@{values.get('POSTGRES_SERVER')}:{values.get('POSTGRES_PORT')}/{values.get('POSTGRES_DB') or ''}"
 
     # LLM settings
     DEFAULT_MODEL: str = "gpt-4"
     OPENAI_API_KEY: Optional[str] = None
+
+    # Vector database settings
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    VECTOR_SIMILARITY_METRIC: str = "cosine"  # cosine, l2, inner_product
 
     class Config:
         case_sensitive = True
