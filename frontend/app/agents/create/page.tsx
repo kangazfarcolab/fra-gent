@@ -63,27 +63,29 @@ export default function CreateAgentPage() {
           // Transform the data into the format we need
           const provider = data; // The response is the provider settings
 
-          // Create a provider object
-          const customProvider = {
-            id: 'custom1',
-            name: provider.name || 'Custom Provider',
-            api_key: provider.api_key || '',
-            api_base: provider.api_base || provider.host || 'https://llm.chutes.ai/v1',
-            default_model: provider.default_model || ''
-          };
+          // Only create a provider object if we have valid data
+          if (provider && provider.name && provider.host) {
+            const customProvider = {
+              id: 'custom1',
+              name: provider.name,
+              api_key: provider.api_key || '',
+              api_base: provider.host || provider.api_base || '',
+              default_model: provider.default_model || ''
+            };
 
-          setCustomProviders([customProvider]);
+            setCustomProviders([customProvider]);
+          } else {
+            // No valid custom provider found
+            setCustomProviders([]);
+          }
+        } else {
+          // No custom provider settings found
+          setCustomProviders([]);
         }
       } catch (error) {
         console.error('Error fetching custom providers:', error);
-        // Set a default provider if fetch fails
-        setCustomProviders([{
-          id: 'custom1',
-          name: 'Custom Provider',
-          api_key: '',
-          api_base: 'https://llm.chutes.ai/v1',
-          default_model: ''
-        }]);
+        // No custom provider available
+        setCustomProviders([]);
       }
     };
 
@@ -109,6 +111,14 @@ export default function CreateAgentPage() {
       } else if (value === 'custom') {
         // For custom provider, we'll leave it empty and let the user select
         defaultModel = '';
+        // Also reset the custom_provider_id
+        setFormState({
+          ...formState,
+          provider: value,
+          model: defaultModel,
+          custom_provider_id: '',
+        });
+        return;
       }
 
       setFormState({
@@ -117,6 +127,19 @@ export default function CreateAgentPage() {
         model: defaultModel,
       });
       return;
+    }
+
+    // Handle custom provider selection
+    if (name === 'custom_provider_id' && value) {
+      const selectedProvider = customProviders.find(p => p.id === value);
+      if (selectedProvider && selectedProvider.default_model) {
+        setFormState({
+          ...formState,
+          custom_provider_id: value,
+          model: selectedProvider.default_model,
+        });
+        return;
+      }
     }
 
     // Convert numeric values
@@ -283,25 +306,36 @@ export default function CreateAgentPage() {
                     <label htmlFor="custom_provider_id" className="block text-sm font-medium text-gray-700">
                       Custom Provider
                     </label>
-                    <select
-                      id="custom_provider_id"
-                      name="custom_provider_id"
-                      value={formState.custom_provider_id || ''}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    >
-                      <option value="">Select a custom provider</option>
-                      {customProviders.map(provider => (
-                        <option key={provider.id} value={provider.id}>
-                          {provider.name} ({provider.api_base})
-                        </option>
-                      ))}
-                    </select>
-                    <p className="mt-1 text-sm text-gray-500">
-                      <Link href="/settings-basic" className="text-blue-500 hover:underline">
-                        Manage custom providers
-                      </Link>
-                    </p>
+                    {customProviders.length > 0 ? (
+                      <>
+                        <select
+                          id="custom_provider_id"
+                          name="custom_provider_id"
+                          value={formState.custom_provider_id || ''}
+                          onChange={handleInputChange}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                          <option value="">Select a custom provider</option>
+                          {customProviders.map(provider => (
+                            <option key={provider.id} value={provider.id}>
+                              {provider.name} ({provider.api_base})
+                            </option>
+                          ))}
+                        </select>
+                        <p className="mt-1 text-sm text-gray-500">
+                          <Link href="/settings-basic" className="text-blue-500 hover:underline">
+                            Manage custom providers
+                          </Link>
+                        </p>
+                      </>
+                    ) : (
+                      <div className="mt-1">
+                        <p className="text-sm text-red-500 mb-2">No custom providers configured.</p>
+                        <Link href="/settings-basic" className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 inline-block">
+                          Add Custom Provider
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
 

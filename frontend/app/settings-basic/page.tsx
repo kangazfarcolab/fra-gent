@@ -11,21 +11,19 @@ export default function SettingsBasicPage() {
     id: '',
     name: '',
     api_key: '',
-    api_base: 'https://llm.chutes.ai/v1',
-    default_model: 'RekaAI/reka-flash-3'
+    api_base: '',
+    default_model: ''
   });
   const [settings, setSettings] = useState({
-    default_provider: 'custom',
+    default_provider: 'openai',
     providers: {
       openai: { name: 'OpenAI', api_key: '', api_base: 'https://api.openai.com/v1', default_model: 'gpt-4' },
-      custom: { name: 'Chutes AI', api_key: '', api_base: 'https://llm.chutes.ai/v1', default_model: 'RekaAI/reka-flash-3' },
+      custom: { name: 'Custom API', api_key: '', api_base: '', default_model: '' },
       ollama: { name: 'Ollama', api_key: '', api_base: 'http://localhost:11434', default_model: 'llama2' },
       openrouter: { name: 'OpenRouter', api_key: '', api_base: 'https://openrouter.ai/api/v1', default_model: 'openai/gpt-3.5-turbo' },
       anthropic: { name: 'Anthropic', api_key: '', api_base: 'https://api.anthropic.com/v1', default_model: 'claude-3-opus-20240229' },
     },
-    custom_providers: [
-      { id: 'custom1', name: 'Chutes AI', api_key: '', api_base: 'https://llm.chutes.ai/v1', default_model: 'RekaAI/reka-flash-3' },
-    ],
+    custom_providers: [],
   });
 
   useEffect(() => {
@@ -310,7 +308,7 @@ export default function SettingsBasicPage() {
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       value={newProvider.name}
                       onChange={(e) => setNewProvider({...newProvider, name: e.target.value})}
-                      placeholder="Chutes AI"
+                      placeholder="Custom Provider Name"
                     />
                   </div>
                   <div>
@@ -336,7 +334,7 @@ export default function SettingsBasicPage() {
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       value={newProvider.api_base}
                       onChange={(e) => setNewProvider({...newProvider, api_base: e.target.value})}
-                      placeholder="https://llm.chutes.ai/v1"
+                      placeholder="https://your-api-url.com/v1"
                     />
                   </div>
                   <div>
@@ -349,7 +347,7 @@ export default function SettingsBasicPage() {
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       value={newProvider.default_model}
                       onChange={(e) => setNewProvider({...newProvider, default_model: e.target.value})}
-                      placeholder="RekaAI/reka-flash-3"
+                      placeholder="your-model-name"
                     />
                   </div>
                 </div>
@@ -360,41 +358,76 @@ export default function SettingsBasicPage() {
                     onClick={() => {
                       setLoading(true);
 
-                      // In a real implementation, we would save to the API
-                      setTimeout(() => {
-                        // Update or add the provider
-                        const newProviders = [...settings.custom_providers];
-                        const existingIndex = newProviders.findIndex(p => p.id === newProvider.id);
+                      // Save to the API
+                      const saveCustomProvider = async () => {
+                        try {
+                          // Prepare the data for the API
+                          const providerData = {
+                            name: newProvider.name,
+                            api_key: newProvider.api_key,
+                            host: newProvider.api_base,
+                            default_model: newProvider.default_model
+                          };
 
-                        if (existingIndex >= 0) {
-                          // Update existing
-                          newProviders[existingIndex] = {...newProvider};
-                          setNotification({ message: `Updated provider ${newProvider.name}`, type: 'success' });
-                        } else {
-                          // Add new
-                          newProviders.push({
-                            ...newProvider,
-                            id: `custom${Date.now()}`
+                          // Call the API to save the provider settings
+                          const response = await fetch('/api/settings/provider/custom', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(providerData),
                           });
-                          setNotification({ message: `Added provider ${newProvider.name}`, type: 'success' });
+
+                          if (!response.ok) {
+                            throw new Error('Failed to save custom provider settings');
+                          }
+
+                          // Get the updated settings
+                          const data = await response.json();
+
+                          // Update the UI
+                          setNotification({ message: `Saved provider ${newProvider.name}`, type: 'success' });
+
+                          // Reset form
+                          setNewProvider({
+                            id: '',
+                            name: '',
+                            api_key: '',
+                            api_base: '',
+                            default_model: ''
+                          });
+
+                          // Refresh the custom providers list
+                          const customProvider = {
+                            id: 'custom1',
+                            name: providerData.name,
+                            api_key: providerData.api_key,
+                            api_base: providerData.host,
+                            default_model: providerData.default_model
+                          };
+
+                          setSettings({
+                            ...settings,
+                            providers: {
+                              ...settings.providers,
+                              custom: {
+                                name: providerData.name,
+                                api_key: providerData.api_key,
+                                api_base: providerData.host,
+                                default_model: providerData.default_model
+                              }
+                            },
+                            custom_providers: [customProvider]
+                          });
+                        } catch (error) {
+                          console.error('Error saving custom provider:', error);
+                          setNotification({ message: 'Failed to save custom provider settings', type: 'error' });
+                        } finally {
+                          setLoading(false);
                         }
+                      };
 
-                        setSettings({
-                          ...settings,
-                          custom_providers: newProviders
-                        });
-
-                        // Reset form
-                        setNewProvider({
-                          id: '',
-                          name: '',
-                          api_key: '',
-                          api_base: 'https://llm.chutes.ai/v1',
-                          default_model: 'RekaAI/reka-flash-3'
-                        });
-
-                        setLoading(false);
-                      }, 1000);
+                      saveCustomProvider();
                     }}
                   >
                     {loading ? (
