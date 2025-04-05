@@ -61,22 +61,29 @@ export default function CreateAgentPage() {
         if (response.ok) {
           const data = await response.json();
           // Transform the data into the format we need
-          const providers = [];
-          if (data && data.custom_providers) {
-            for (const provider of data.custom_providers) {
-              providers.push({
-                id: provider.id,
-                name: provider.name,
-                api_key: provider.api_key,
-                api_base: provider.api_base || provider.host,
-                default_model: provider.default_model
-              });
-            }
-          }
-          setCustomProviders(providers);
+          const provider = data; // The response is the provider settings
+
+          // Create a provider object
+          const customProvider = {
+            id: 'custom1',
+            name: provider.name || 'Custom Provider',
+            api_key: provider.api_key || '',
+            api_base: provider.api_base || provider.host || 'https://llm.chutes.ai/v1',
+            default_model: provider.default_model || ''
+          };
+
+          setCustomProviders([customProvider]);
         }
       } catch (error) {
         console.error('Error fetching custom providers:', error);
+        // Set a default provider if fetch fails
+        setCustomProviders([{
+          id: 'custom1',
+          name: 'Custom Provider',
+          api_key: '',
+          api_base: 'https://llm.chutes.ai/v1',
+          default_model: ''
+        }]);
       }
     };
 
@@ -264,8 +271,9 @@ export default function CreateAgentPage() {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="openai">OpenAI</option>
-                    <option value="ollama">Ollama</option>
+                    <option value="anthropic">Anthropic</option>
                     <option value="openrouter">OpenRouter</option>
+                    <option value="ollama">Ollama</option>
                     <option value="custom">Custom API</option>
                   </select>
                 </div>
