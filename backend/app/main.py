@@ -1,9 +1,14 @@
 import logging
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import settings
 from app.api.api import api_router
+from app.db.base import Base
+from app.db.init_db import init_db
+from app.db.session import engine
 
 # Setup logging
 logging.basicConfig(
@@ -32,6 +37,13 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     logger.info("Starting Fra-Gent API server")
+
+    # Initialize database
+    try:
+        await init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
