@@ -1,4 +1,4 @@
-import api from './api';
+// Use fetch API directly for Next.js API routes
 
 export interface ProviderSettings {
   api_key?: string;
@@ -16,22 +16,42 @@ export interface AllSettings {
  * Fetch all settings
  */
 export const fetchSettings = async (): Promise<AllSettings> => {
-  const response = await api.get('/settings/all');
-  return response.data;
+  const response = await fetch('/api/settings/all');
+  if (!response.ok) {
+    throw new Error('Failed to fetch settings');
+  }
+  return response.json();
 };
 
 /**
  * Update provider settings
  */
 export const updateProviderSettings = async (provider: string, settings: ProviderSettings): Promise<any> => {
-  const response = await api.post(`/settings/provider/${provider}`, settings);
-  return response.data;
+  const response = await fetch(`/api/settings/provider/${provider}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(settings),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update provider settings');
+  }
+  return response.json();
 };
 
 /**
  * Set default provider
  */
 export const setDefaultProvider = async (provider: string): Promise<any> => {
-  const response = await api.post(`/settings/default-provider/${provider}`);
-  return response.data;
+  const response = await fetch(`/api/settings/default-provider/${provider}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to set default provider');
+  }
+  return response.json();
 };
