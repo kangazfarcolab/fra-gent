@@ -29,16 +29,16 @@ async def get_all_settings(
     # Get default provider
     default_provider_setting = await crud.settings.get_by_key(db, "default_provider")
     default_provider = default_provider_setting.value["value"] if default_provider_setting else "openai"
-    
+
     # Get all provider settings
     providers = {}
     provider_keys = ["openai", "custom", "ollama", "openrouter"]
-    
+
     for key in provider_keys:
         provider_setting = await crud.settings.get_by_key(db, key)
         if provider_setting:
             providers[key] = ProviderSettings(**provider_setting.value)
-    
+
     return AllSettings(
         default_provider=default_provider,
         providers=providers,
@@ -58,7 +58,7 @@ async def create_setting(
             status_code=400,
             detail=f"Setting with key {setting_in.key} already exists",
         )
-    
+
     return await crud.settings.create(db, setting_in)
 
 
@@ -75,7 +75,7 @@ async def update_setting(
             status_code=404,
             detail=f"Setting with key {key} not found",
         )
-    
+
     return await crud.settings.update(db, setting, setting_in)
 
 
@@ -91,7 +91,7 @@ async def get_setting(
             status_code=404,
             detail=f"Setting with key {key} not found",
         )
-    
+
     return setting
 
 
@@ -107,7 +107,7 @@ async def delete_setting(
             status_code=404,
             detail=f"Setting with key {key} not found",
         )
-    
+
     return await crud.settings.delete(db, setting.id)
 
 
@@ -123,17 +123,41 @@ async def update_provider_settings(
             status_code=400,
             detail=f"Invalid provider: {provider}",
         )
-    
+
     # Convert to dict for storage
     settings_dict = settings.model_dump(exclude_none=True)
-    
+
     # Upsert the settings
     return await crud.settings.upsert(
         db,
-        key=provider,
+        key=f"provider_{provider}",
         value=settings_dict,
         description=f"Settings for {provider} provider",
     )
+
+
+@router.get("/provider/{provider}", response_model=ProviderSettings)
+async def get_provider_settings(
+    provider: str,
+    db: AsyncSession = Depends(get_db),
+) -> Any:
+    """Get provider settings."""
+    if provider not in ["openai", "custom", "ollama", "openrouter"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid provider: {provider}",
+        )
+
+    # Get the settings
+    setting = await crud.settings.get_by_key(db, f"provider_{provider}")
+    if not setting:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Settings for provider {provider} not found",
+        )
+
+    # Return the settings
+    return setting.value
 
 
 @router.post("/default-provider/{provider}", response_model=Settings)
@@ -147,7 +171,7 @@ async def set_default_provider(
             status_code=400,
             detail=f"Invalid provider: {provider}",
         )
-    
+
     # Check if provider settings exist
     provider_settings = await crud.settings.get_by_key(db, provider)
     if not provider_settings:
@@ -155,7 +179,7 @@ async def set_default_provider(
             status_code=400,
             detail=f"Provider {provider} is not configured",
         )
-    
+
     # Upsert the default provider setting
     return await crud.settings.upsert(
         db,

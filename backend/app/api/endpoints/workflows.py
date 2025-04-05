@@ -31,6 +31,7 @@ async def create_workflow(workflow: WorkflowCreate):
         "name": workflow.name,
         "description": workflow.description,
         "definition": workflow.definition,
+        "agent_ids": workflow.agent_ids,
         "created_at": "2023-07-01T00:00:00Z",
         "updated_at": "2023-07-01T00:00:00Z",
     }
@@ -50,6 +51,7 @@ async def get_workflow(workflow_id: str):
             "nodes": [],
             "edges": []
         },
+        "agent_ids": ["4573beed-886e-465c-adc0-c60775072e40"],
         "created_at": "2023-07-01T00:00:00Z",
         "updated_at": "2023-07-01T00:00:00Z",
     }

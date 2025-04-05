@@ -3,7 +3,7 @@ Agent management endpoints.
 """
 
 import uuid
-from typing import List
+from typing import List, Dict, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -13,6 +13,8 @@ from app.db.models import Agent
 from app.db.session import get_db
 from app.schemas.agent import Agent as AgentSchema
 from app.schemas.agent import AgentCreate, AgentUpdate
+from app.schemas.memory import MemoryCreate
+from app.services.llm import get_llm_service
 
 router = APIRouter()
 
@@ -100,6 +102,8 @@ async def delete_agent(agent_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """
     Delete an agent.
     """
+    from sqlalchemy import text
+
     result = await db.execute(select(Agent).filter(Agent.id == agent_id))
     agent = result.scalars().first()
     if not agent:
@@ -107,6 +111,85 @@ async def delete_agent(agent_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Agent with ID {agent_id} not found",
         )
-    await db.delete(agent)
+
+    # Delete memories manually to avoid issues with the memory_type column
+    await db.execute(text(f"DELETE FROM memory WHERE agent_id = '{agent_id}'"))
+
+    # Delete the agent directly from the database
+    await db.execute(text(f"DELETE FROM agent WHERE id = '{agent_id}'"))
     await db.commit()
+
     return None
+
+
+@router.post("/{agent_id}/interact", status_code=status.HTTP_200_OK)
+async def interact_with_agent(
+    agent_id: uuid.UUID,
+    request: Dict[str, Any],
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Interact with an agent.
+    """
+    # Get the agent
+    result = await db.execute(select(Agent).filter(Agent.id == agent_id))
+    agent = result.scalars().first()
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Agent with ID {agent_id} not found",
+        )
+
+    # Get the message from the request
+    message = request.get("message", "")
+    if not message:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Message is required",
+        )
+
+    # Get the LLM service
+    from app.services.llm import get_llm_service
+    llm_service = get_llm_service()
+
+    # Create a memory for the user message
+    user_memory = MemoryCreate(
+        agent_id=str(agent_id),
+        role="user",
+        content=message,
+    )
+
+    # Get the response from the LLM
+    response = await llm_service.generate_response(
+        agent=agent,
+        message=message,
+        include_history=request.get("include_history", False),
+    )
+
+    # Create a memory for the assistant response
+    assistant_memory = MemoryCreate(
+        agent_id=str(agent_id),
+        role="assistant",
+        content=response,
+    )
+
+    # Return the response and memories
+    return {
+        "response": response,
+        "memories": [
+            {
+                "id": str(uuid.uuid4()),
+                "agent_id": str(agent_id),
+                "role": "user",
+                "content": message,
+                "created_at": "2023-07-01T00:00:00Z",
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "agent_id": str(agent_id),
+                "role": "assistant",
+                "content": response,
+                "created_at": "2023-07-01T00:00:00Z",
+            },
+        ],
+    }

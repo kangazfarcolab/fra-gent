@@ -14,6 +14,8 @@ from app.db.base_class import Base
 
 
 class KnowledgeBase(Base):
+    __tablename__ = 'knowledgebase_main'
+    __table_args__ = {'extend_existing': True}
     """
     Knowledge base model for storing agent knowledge.
     """

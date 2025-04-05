@@ -19,7 +19,7 @@ from app.utils.working_memory import WorkingMemory
 router = APIRouter()
 
 
-@router.post("/{agent_id}/trigger", response_model=EventResponse)
+@router.post("/trigger", response_model=EventResponse)
 async def trigger_agent(
     agent_id: uuid.UUID,
     event: EventTrigger,

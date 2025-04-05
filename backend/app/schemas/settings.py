@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional, Union
 
@@ -24,7 +25,7 @@ class SettingsUpdate(BaseModel):
 
 class SettingsInDBBase(SettingsBase):
     """Settings in DB base schema."""
-    id: str
+    id: uuid.UUID
     created_at: datetime
     updated_at: datetime
 
@@ -42,6 +43,7 @@ class ProviderSettings(BaseModel):
     name: Optional[str] = None  # Display name for the provider
     api_key: Optional[str] = None
     api_base: Optional[str] = None
+    host: Optional[str] = None  # URL for custom providers
     default_model: Optional[str] = None
     models: Optional[Dict[str, Dict[str, Union[str, int, float, bool]]]] = None
 

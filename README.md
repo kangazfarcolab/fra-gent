@@ -89,6 +89,16 @@ Fra-Gent is currently in active development. Check the [project board](https://g
 
 For development setup and guidelines, see [docs/development/README.md](docs/development/README.md).
 
+## 📚 Documentation
+
+- [User Guide](docs/user-guide/README.md)
+- [API Documentation](docs/api/README.md)
+- [Agent Interaction API](docs/api/AGENT_INTERACTION.md)
+- [Development Guide](docs/development/README.md)
+- [Changelog](docs/development/CHANGELOG.md)
+- [Architecture](docs/architecture/README.md)
+- [Roadmap](docs/ROADMAP.md)
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -30,3 +30,10 @@ async def get_db() -> AsyncSession:
     """
     async with async_session() as session:
         yield session
+
+
+def get_db_sync() -> AsyncSession:
+    """
+    Get a database session synchronously.
+    """
+    return async_session()

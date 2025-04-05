@@ -37,4 +37,4 @@ class Document(Base):
     meta_data = Column(JSONB, nullable=True)
 
     # Relationships
-    knowledge_base = relationship("KnowledgeBase", back_populates="documents")
+    # knowledge_base = relationship("app.db.models.knowledgebase.KnowledgeBase", back_populates="documents")

@@ -13,6 +13,7 @@ class WorkflowBase(BaseModel):
     name: str
     description: Optional[str] = None
     definition: Dict[str, Any] = Field(default_factory=lambda: {"nodes": [], "edges": []})
+    agent_ids: Optional[List[str]] = None
 
 
 class WorkflowCreate(WorkflowBase):
