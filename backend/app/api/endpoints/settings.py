@@ -118,7 +118,7 @@ async def update_provider_settings(
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     """Update provider settings."""
-    if provider not in ["openai", "custom", "ollama", "openrouter"]:
+    if provider not in ["openai", "custom", "ollama", "openrouter", "anthropic"]:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid provider: {provider}",
@@ -142,7 +142,7 @@ async def get_provider_settings(
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     """Get provider settings."""
-    if provider not in ["openai", "custom", "ollama", "openrouter"]:
+    if provider not in ["openai", "custom", "ollama", "openrouter", "anthropic"]:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid provider: {provider}",
@@ -160,13 +160,40 @@ async def get_provider_settings(
     return setting.value
 
 
+@router.delete("/provider/{provider}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_provider_settings(
+    provider: str,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Delete provider settings."""
+    if provider not in ["openai", "custom", "ollama", "openrouter", "anthropic"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid provider: {provider}",
+        )
+
+    # Get the settings
+    setting = await crud.settings.get_by_key(db, f"provider_{provider}")
+    if not setting:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Settings for provider {provider} not found",
+        )
+
+    # Delete the settings
+    await db.delete(setting)
+    await db.commit()
+
+    return None
+
+
 @router.post("/default-provider/{provider}", response_model=Settings)
 async def set_default_provider(
     provider: str,
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     """Set the default provider."""
-    if provider not in ["openai", "custom", "ollama", "openrouter"]:
+    if provider not in ["openai", "custom", "ollama", "openrouter", "anthropic"]:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid provider: {provider}",

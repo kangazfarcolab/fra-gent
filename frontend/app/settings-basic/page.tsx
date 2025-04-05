@@ -20,6 +20,8 @@ export default function SettingsBasicPage() {
       openai: { name: 'OpenAI', api_key: '', api_base: 'https://api.openai.com/v1', default_model: 'gpt-4' },
       custom: { name: 'Chutes AI', api_key: '', api_base: 'https://llm.chutes.ai/v1', default_model: 'RekaAI/reka-flash-3' },
       ollama: { name: 'Ollama', api_key: '', api_base: 'http://localhost:11434', default_model: 'llama2' },
+      openrouter: { name: 'OpenRouter', api_key: '', api_base: 'https://openrouter.ai/api/v1', default_model: 'openai/gpt-3.5-turbo' },
+      anthropic: { name: 'Anthropic', api_key: '', api_base: 'https://api.anthropic.com/v1', default_model: 'claude-3-opus-20240229' },
     },
     custom_providers: [
       { id: 'custom1', name: 'Chutes AI', api_key: '', api_base: 'https://llm.chutes.ai/v1', default_model: 'RekaAI/reka-flash-3' },
@@ -105,6 +107,18 @@ export default function SettingsBasicPage() {
               OpenAI
             </button>
             <button
+              className={`px-4 py-2 font-medium ${activeTab === 'anthropic' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('anthropic')}
+            >
+              Anthropic
+            </button>
+            <button
+              className={`px-4 py-2 font-medium ${activeTab === 'openrouter' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('openrouter')}
+            >
+              OpenRouter
+            </button>
+            <button
               className={`px-4 py-2 font-medium ${activeTab === 'custom' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
               onClick={() => setActiveTab('custom')}
             >
@@ -136,6 +150,8 @@ export default function SettingsBasicPage() {
                     onChange={handleDefaultProviderChange}
                   >
                     <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic</option>
+                    <option value="openrouter">OpenRouter</option>
                     <option value="custom">Custom API</option>
                     <option value="ollama">Ollama</option>
                   </select>
@@ -407,6 +423,120 @@ export default function SettingsBasicPage() {
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Anthropic Settings */}
+          {activeTab === 'anthropic' && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Anthropic Settings</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="anthropic-api-key">
+                    API Key
+                  </label>
+                  <input
+                    type="password"
+                    id="anthropic-api-key"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={settings.providers.anthropic?.api_key || ''}
+                    onChange={(e) => handleProviderChange('anthropic', 'api_key', e.target.value)}
+                    placeholder="sk-ant-..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="anthropic-api-base">
+                    API Base URL
+                  </label>
+                  <input
+                    type="text"
+                    id="anthropic-api-base"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={settings.providers.anthropic?.api_base || 'https://api.anthropic.com/v1'}
+                    onChange={(e) => handleProviderChange('anthropic', 'api_base', e.target.value)}
+                    placeholder="https://api.anthropic.com/v1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="anthropic-default-model">
+                    Default Model
+                  </label>
+                  <input
+                    type="text"
+                    id="anthropic-default-model"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={settings.providers.anthropic?.default_model || 'claude-3-opus-20240229'}
+                    onChange={(e) => handleProviderChange('anthropic', 'default_model', e.target.value)}
+                    placeholder="claude-3-opus-20240229"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  onClick={() => handleSaveProvider('anthropic')}
+                >
+                  Save Settings
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* OpenRouter Settings */}
+          {activeTab === 'openrouter' && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">OpenRouter Settings</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="openrouter-api-key">
+                    API Key
+                  </label>
+                  <input
+                    type="password"
+                    id="openrouter-api-key"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={settings.providers.openrouter?.api_key || ''}
+                    onChange={(e) => handleProviderChange('openrouter', 'api_key', e.target.value)}
+                    placeholder="sk-or-..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="openrouter-api-base">
+                    API Base URL
+                  </label>
+                  <input
+                    type="text"
+                    id="openrouter-api-base"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={settings.providers.openrouter?.api_base || 'https://openrouter.ai/api/v1'}
+                    onChange={(e) => handleProviderChange('openrouter', 'api_base', e.target.value)}
+                    placeholder="https://openrouter.ai/api/v1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="openrouter-default-model">
+                    Default Model
+                  </label>
+                  <input
+                    type="text"
+                    id="openrouter-default-model"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={settings.providers.openrouter?.default_model || 'openai/gpt-3.5-turbo'}
+                    onChange={(e) => handleProviderChange('openrouter', 'default_model', e.target.value)}
+                    placeholder="openai/gpt-3.5-turbo"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  onClick={() => handleSaveProvider('openrouter')}
+                >
+                  Save Settings
+                </button>
               </div>
             </div>
           )}

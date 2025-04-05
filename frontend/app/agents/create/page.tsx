@@ -54,29 +54,63 @@ export default function CreateAgentPage() {
 
   // Load custom providers from settings
   useEffect(() => {
-    // In a real implementation, we would fetch from the API
-    // For now, we'll use mock data
-    setCustomProviders([
-      {
-        id: 'custom1',
-        name: 'Chutes AI',
-        api_key: 'your-api-key',
-        api_base: 'https://llm.chutes.ai/v1',
-        default_model: 'RekaAI/reka-flash-3'
-      },
-      {
-        id: 'custom2',
-        name: 'Anthropic',
-        api_key: 'your-api-key',
-        api_base: 'https://api.anthropic.com',
-        default_model: 'claude-3-opus-20240229'
-      },
-    ]);
+    // Fetch custom providers from the API
+    const fetchCustomProviders = async () => {
+      try {
+        const response = await fetch('/api/settings/provider/custom');
+        if (response.ok) {
+          const data = await response.json();
+          // Transform the data into the format we need
+          const providers = [];
+          if (data && data.custom_providers) {
+            for (const provider of data.custom_providers) {
+              providers.push({
+                id: provider.id,
+                name: provider.name,
+                api_key: provider.api_key,
+                api_base: provider.api_base || provider.host,
+                default_model: provider.default_model
+              });
+            }
+          }
+          setCustomProviders(providers);
+        }
+      } catch (error) {
+        console.error('Error fetching custom providers:', error);
+      }
+    };
+
+    fetchCustomProviders();
   }, []);
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    // Handle provider change specially
+    if (name === 'provider') {
+      // Set default model based on provider
+      let defaultModel = '';
+      if (value === 'openai') {
+        defaultModel = 'gpt-4';
+      } else if (value === 'anthropic') {
+        defaultModel = 'claude-3-opus-20240229';
+      } else if (value === 'openrouter') {
+        defaultModel = 'openai/gpt-3.5-turbo';
+      } else if (value === 'ollama') {
+        defaultModel = 'llama2';
+      } else if (value === 'custom') {
+        // For custom provider, we'll leave it empty and let the user select
+        defaultModel = '';
+      }
+
+      setFormState({
+        ...formState,
+        provider: value,
+        model: defaultModel,
+      });
+      return;
+    }
 
     // Convert numeric values
     if (name === 'temperature' || name === 'max_tokens' || name === 'memory_window') {
