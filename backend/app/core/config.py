@@ -45,9 +45,30 @@ class Settings(BaseSettings):
         values = info.data
         return f"postgresql+asyncpg://{values.get('POSTGRES_USER')}:{values.get('POSTGRES_PASSWORD')}@{values.get('POSTGRES_SERVER')}:{values.get('POSTGRES_PORT')}/{values.get('POSTGRES_DB') or ''}"
 
-    # LLM settings
-    DEFAULT_MODEL: str = "gpt-4"
+    # LLM Provider settings
+
+    # Default Provider and Model
+    DEFAULT_PROVIDER: str = "custom"
+    DEFAULT_MODEL: str = "RekaAI/reka-flash-3"
+
+    # OpenAI
     OPENAI_API_KEY: Optional[str] = None
+    OPENAI_API_BASE: str = "https://api.openai.com/v1"
+    OPENAI_DEFAULT_MODEL: str = "gpt-4"
+
+    # Ollama
+    OLLAMA_API_BASE: str = "http://localhost:11434"
+    OLLAMA_DEFAULT_MODEL: str = "llama3"
+
+    # OpenRouter
+    OPENROUTER_API_KEY: Optional[str] = None
+    OPENROUTER_API_BASE: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_DEFAULT_MODEL: str = "anthropic/claude-3-opus"
+
+    # Custom API Host
+    CUSTOM_API_KEY: Optional[str] = None
+    CUSTOM_API_BASE: str = "https://llm.chutes.ai/v1"
+    CUSTOM_DEFAULT_MODEL: str = "RekaAI/reka-flash-3"
 
     # Vector database settings
     EMBEDDING_MODEL: str = "text-embedding-3-small"

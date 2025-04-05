@@ -1,31 +1,14 @@
 """
-Base database model.
+Import all models here to ensure they are registered with SQLAlchemy.
 """
 
-from datetime import datetime
-from typing import Any
+# Import base class
+from app.db.base_class import Base
 
-from sqlalchemy import Column, DateTime
-from sqlalchemy.ext.declarative import as_declarative, declared_attr
-
-
-@as_declarative()
-class Base:
-    """
-    Base class for all database models.
-    """
-    id: Any
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
-        nullable=False,
-    )
-
-    @declared_attr
-    def __tablename__(cls) -> str:
-        """
-        Generate __tablename__ automatically.
-        """
-        return cls.__name__.lower()
+# Import all models
+from app.db.models.agent import Agent
+from app.db.models.memory import Memory
+from app.db.models.workflow import Workflow
+from app.db.models.knowledgebase import KnowledgeBase
+from app.db.models.document import Document
+from app.db.models.settings import Settings

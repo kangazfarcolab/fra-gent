@@ -19,6 +19,11 @@ services:
       - POSTGRES_PORT=5432
       - DEBUG=true
       - CORS_ORIGINS=http://localhost:3000
+      - CUSTOM_API_KEY=cpk_f7f99ca38d4444d7b3003e6537d93d2b.961c728be2eb57348e16013b23a8453a.JE3meZydUdd9ZGv3sFTI8IGa1YtJ78Kv
+      - CUSTOM_API_BASE=https://llm.chutes.ai/v1
+      - CUSTOM_DEFAULT_MODEL=RekaAI/reka-flash-3
+      - DEFAULT_PROVIDER=custom
+      - DEFAULT_MODEL=RekaAI/reka-flash-3
     depends_on:
       - db
     networks:

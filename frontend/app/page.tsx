@@ -8,7 +8,7 @@ export default function Home() {
         <p className="text-center mb-8">
           A comprehensive web-based framework for creating, managing, and orchestrating AI agents.
         </p>
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-4 flex-wrap">
           <a
             href="/agents"
             className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
@@ -36,6 +36,21 @@ export default function Home() {
             </h2>
             <p className="m-0 max-w-[30ch] text-sm opacity-50">
               Build workflows connecting agents and tools.
+            </p>
+          </a>
+
+          <a
+            href="/settings-basic"
+            className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+          >
+            <h2 className="mb-3 text-2xl font-semibold">
+              Settings{' '}
+              <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+                -&gt;
+              </span>
+            </h2>
+            <p className="m-0 max-w-[30ch] text-sm opacity-50">
+              Configure API providers and application settings.
             </p>
           </a>
         </div>
