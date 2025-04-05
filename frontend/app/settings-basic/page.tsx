@@ -70,7 +70,7 @@ export default function SettingsBasicPage() {
           {notification.message}
         </div>
       )}
-      
+
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold">Settings</h1>
         <Link href="/" className="text-blue-600 hover:text-blue-800">
@@ -225,7 +225,7 @@ export default function SettingsBasicPage() {
                     type="text"
                     id="custom-api-base"
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    value={settings.providers.custom?.api_base || ''}
+                    value={settings.providers.custom?.api_base || 'https://llm.chutes.ai/v1'}
                     onChange={(e) => handleProviderChange('custom', 'api_base', e.target.value)}
                     placeholder="https://llm.chutes.ai/v1"
                   />
@@ -238,7 +238,7 @@ export default function SettingsBasicPage() {
                     type="text"
                     id="custom-default-model"
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    value={settings.providers.custom?.default_model || ''}
+                    value={settings.providers.custom?.default_model || 'RekaAI/reka-flash-3'}
                     onChange={(e) => handleProviderChange('custom', 'default_model', e.target.value)}
                     placeholder="RekaAI/reka-flash-3"
                   />
