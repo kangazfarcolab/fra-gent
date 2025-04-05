@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -18,11 +18,23 @@ interface AgentFormState {
   memory_type: string;
   memory_window: number;
   provider: string;
+  custom_provider_id?: string;
+}
+
+interface CustomProvider {
+  id: string;
+  name: string;
+  api_key: string;
+  api_base: string;
+  default_model: string;
 }
 
 export default function CreateAgentPage() {
   const router = useRouter();
-  
+
+  // State for custom providers
+  const [customProviders, setCustomProviders] = useState<CustomProvider[]>([]);
+
   // Initialize form state
   const [formState, setFormState] = useState<AgentFormState>({
     name: '',
@@ -38,11 +50,33 @@ export default function CreateAgentPage() {
     memory_window: 10,
     provider: 'openai',
   });
-  
+
+  // Load custom providers from settings
+  useEffect(() => {
+    // In a real implementation, we would fetch from the API
+    // For now, we'll use mock data
+    setCustomProviders([
+      {
+        id: 'custom1',
+        name: 'Chutes AI',
+        api_key: 'your-api-key',
+        api_base: 'https://llm.chutes.ai/v1',
+        default_model: 'RekaAI/reka-flash-3'
+      },
+      {
+        id: 'custom2',
+        name: 'Anthropic',
+        api_key: 'your-api-key',
+        api_base: 'https://api.anthropic.com',
+        default_model: 'claude-3-opus-20240229'
+      },
+    ]);
+  }, []);
+
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     // Convert numeric values
     if (name === 'temperature' || name === 'max_tokens' || name === 'memory_window') {
       setFormState({
@@ -56,23 +90,44 @@ export default function CreateAgentPage() {
       });
     }
   };
-  
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       // Prepare the agent data
+      let integrationSettings: any = {
+        provider: formState.provider,
+      };
+
+      // If using a custom provider, add the custom provider details
+      if (formState.provider === 'custom' && formState.custom_provider_id) {
+        const customProvider = customProviders.find(p => p.id === formState.custom_provider_id);
+        if (customProvider) {
+          integrationSettings = {
+            provider: 'custom',
+            api_key: customProvider.api_key,
+            api_base: customProvider.api_base,
+            custom_provider_name: customProvider.name,
+          };
+
+          // Use the custom provider's default model if none is specified
+          if (!formState.model || formState.model === 'gpt-4') {
+            formState.model = customProvider.default_model;
+          }
+        }
+      }
+
       const agentData = {
         ...formState,
-        integration_settings: {
-          provider: formState.provider,
-        },
+        integration_settings: integrationSettings,
       };
-      
-      // Remove the provider field as it's now in integration_settings
+
+      // Remove the provider and custom_provider_id fields as they're now in integration_settings
       delete (agentData as any).provider;
-      
+      delete (agentData as any).custom_provider_id;
+
       // Send the data to the API
       const response = await fetch('/api/agents', {
         method: 'POST',
@@ -81,11 +136,11 @@ export default function CreateAgentPage() {
         },
         body: JSON.stringify(agentData),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to create agent');
       }
-      
+
       // Navigate back to the agents page
       router.push('/agents');
     } catch (error) {
@@ -93,7 +148,7 @@ export default function CreateAgentPage() {
       alert('Failed to create agent. Please try again.');
     }
   };
-  
+
   return (
     <main className="flex min-h-screen flex-col items-center p-8">
       <div className="w-full max-w-3xl">
@@ -102,9 +157,9 @@ export default function CreateAgentPage() {
             &larr; Back to Agents
           </Link>
         </div>
-        
+
         <h1 className="text-3xl font-bold mb-6">Create New Agent</h1>
-        
+
         <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6">
           <div className="space-y-6">
             {/* Basic Information */}
@@ -125,7 +180,7 @@ export default function CreateAgentPage() {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                     Description
@@ -139,7 +194,7 @@ export default function CreateAgentPage() {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="avatar_url" className="block text-sm font-medium text-gray-700">
                     Avatar URL
@@ -155,7 +210,7 @@ export default function CreateAgentPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* LLM Configuration */}
             <div>
               <h2 className="text-xl font-semibold mb-4">LLM Configuration</h2>
@@ -174,10 +229,37 @@ export default function CreateAgentPage() {
                     <option value="openai">OpenAI</option>
                     <option value="ollama">Ollama</option>
                     <option value="openrouter">OpenRouter</option>
-                    <option value="custom">Custom</option>
+                    <option value="custom">Custom API</option>
                   </select>
                 </div>
-                
+
+                {formState.provider === 'custom' && (
+                  <div>
+                    <label htmlFor="custom_provider_id" className="block text-sm font-medium text-gray-700">
+                      Custom Provider
+                    </label>
+                    <select
+                      id="custom_provider_id"
+                      name="custom_provider_id"
+                      value={formState.custom_provider_id || ''}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">Select a custom provider</option>
+                      {customProviders.map(provider => (
+                        <option key={provider.id} value={provider.id}>
+                          {provider.name} ({provider.api_base})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-sm text-gray-500">
+                      <Link href="/settings-basic" className="text-blue-500 hover:underline">
+                        Manage custom providers
+                      </Link>
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label htmlFor="model" className="block text-sm font-medium text-gray-700">
                     Model
@@ -192,7 +274,7 @@ export default function CreateAgentPage() {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="temperature" className="block text-sm font-medium text-gray-700">
                     Temperature
@@ -209,7 +291,7 @@ export default function CreateAgentPage() {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="max_tokens" className="block text-sm font-medium text-gray-700">
                     Max Tokens
@@ -226,7 +308,7 @@ export default function CreateAgentPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Personality & Behavior */}
             <div>
               <h2 className="text-xl font-semibold mb-4">Personality & Behavior</h2>
@@ -244,7 +326,7 @@ export default function CreateAgentPage() {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="personality" className="block text-sm font-medium text-gray-700">
                     Personality
@@ -261,7 +343,7 @@ export default function CreateAgentPage() {
                     e.g., helpful, creative, analytical
                   </p>
                 </div>
-                
+
                 <div>
                   <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
                     Bio
@@ -280,7 +362,7 @@ export default function CreateAgentPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Memory Configuration */}
             <div>
               <h2 className="text-xl font-semibold mb-4">Memory Configuration</h2>
@@ -301,7 +383,7 @@ export default function CreateAgentPage() {
                     <option value="hybrid">Hybrid</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label htmlFor="memory_window" className="block text-sm font-medium text-gray-700">
                     Memory Window
@@ -321,7 +403,7 @@ export default function CreateAgentPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Submit Button */}
             <div className="flex justify-end">
               <button

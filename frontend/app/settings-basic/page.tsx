@@ -7,13 +7,23 @@ export default function SettingsBasicPage() {
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [newProvider, setNewProvider] = useState({
+    id: '',
+    name: '',
+    api_key: '',
+    api_base: 'https://llm.chutes.ai/v1',
+    default_model: 'RekaAI/reka-flash-3'
+  });
   const [settings, setSettings] = useState({
     default_provider: 'custom',
     providers: {
-      openai: { api_key: '', api_base: 'https://api.openai.com/v1', default_model: 'gpt-4' },
-      custom: { api_key: '', api_base: 'https://llm.chutes.ai/v1', default_model: 'RekaAI/reka-flash-3' },
-      ollama: { api_key: '', api_base: 'http://localhost:11434', default_model: 'llama2' },
+      openai: { name: 'OpenAI', api_key: '', api_base: 'https://api.openai.com/v1', default_model: 'gpt-4' },
+      custom: { name: 'Chutes AI', api_key: '', api_base: 'https://llm.chutes.ai/v1', default_model: 'RekaAI/reka-flash-3' },
+      ollama: { name: 'Ollama', api_key: '', api_base: 'http://localhost:11434', default_model: 'llama2' },
     },
+    custom_providers: [
+      { id: 'custom1', name: 'Chutes AI', api_key: '', api_base: 'https://llm.chutes.ai/v1', default_model: 'RekaAI/reka-flash-3' },
+    ],
   });
 
   useEffect(() => {
@@ -202,61 +212,201 @@ export default function SettingsBasicPage() {
           {/* Custom API Settings */}
           {activeTab === 'custom' && (
             <div>
-              <h2 className="text-xl font-semibold mb-4">Custom API Settings</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="custom-api-key">
-                    API Key
-                  </label>
-                  <input
-                    type="password"
-                    id="custom-api-key"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    value={settings.providers.custom?.api_key || ''}
-                    onChange={(e) => handleProviderChange('custom', 'api_key', e.target.value)}
-                    placeholder="Your API key"
-                  />
+              <h2 className="text-xl font-semibold mb-4">Custom API Providers</h2>
+
+              {/* List of existing custom providers */}
+              {settings.custom_providers.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-medium mb-3">Your Custom Providers</h3>
+                  <div className="space-y-6">
+                    {settings.custom_providers.map((provider, index) => (
+                      <div key={provider.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="text-md font-semibold">{provider.name}</h4>
+                          <button
+                            className="text-red-600 hover:text-red-800 text-sm"
+                            onClick={() => {
+                              // Remove provider
+                              const newProviders = [...settings.custom_providers];
+                              newProviders.splice(index, 1);
+                              setSettings({
+                                ...settings,
+                                custom_providers: newProviders
+                              });
+                              setNotification({ message: `Removed provider ${provider.name}`, type: 'success' });
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-500">Provider Name</p>
+                            <p className="font-medium">{provider.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">API Base URL</p>
+                            <p className="font-medium">{provider.api_base}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Default Model</p>
+                            <p className="font-medium">{provider.default_model}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">API Key</p>
+                            <p className="font-medium">••••••••••••••••</p>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <button
+                            className="text-blue-600 hover:text-blue-800 text-sm"
+                            onClick={() => {
+                              // Edit provider (populate the form below)
+                              setNewProvider({
+                                id: provider.id,
+                                name: provider.name,
+                                api_key: provider.api_key,
+                                api_base: provider.api_base,
+                                default_model: provider.default_model
+                              });
+                            }}
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="custom-api-base">
-                    API Base URL
-                  </label>
-                  <input
-                    type="text"
-                    id="custom-api-base"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    value={settings.providers.custom?.api_base || 'https://llm.chutes.ai/v1'}
-                    onChange={(e) => handleProviderChange('custom', 'api_base', e.target.value)}
-                    placeholder="https://llm.chutes.ai/v1"
-                  />
+              )}
+
+              {/* Add/Edit Custom Provider Form */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <h3 className="text-lg font-medium mb-3">{newProvider.id ? 'Edit Provider' : 'Add New Provider'}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="custom-provider-name">
+                      Provider Name
+                    </label>
+                    <input
+                      type="text"
+                      id="custom-provider-name"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      value={newProvider.name}
+                      onChange={(e) => setNewProvider({...newProvider, name: e.target.value})}
+                      placeholder="Chutes AI"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="custom-api-key">
+                      API Key
+                    </label>
+                    <input
+                      type="password"
+                      id="custom-api-key"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      value={newProvider.api_key}
+                      onChange={(e) => setNewProvider({...newProvider, api_key: e.target.value})}
+                      placeholder="Your API key"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="custom-api-base">
+                      API Base URL
+                    </label>
+                    <input
+                      type="text"
+                      id="custom-api-base"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      value={newProvider.api_base}
+                      onChange={(e) => setNewProvider({...newProvider, api_base: e.target.value})}
+                      placeholder="https://llm.chutes.ai/v1"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="custom-default-model">
+                      Default Model
+                    </label>
+                    <input
+                      type="text"
+                      id="custom-default-model"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      value={newProvider.default_model}
+                      onChange={(e) => setNewProvider({...newProvider, default_model: e.target.value})}
+                      placeholder="RekaAI/reka-flash-3"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="custom-default-model">
-                    Default Model
-                  </label>
-                  <input
-                    type="text"
-                    id="custom-default-model"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    value={settings.providers.custom?.default_model || 'RekaAI/reka-flash-3'}
-                    onChange={(e) => handleProviderChange('custom', 'default_model', e.target.value)}
-                    placeholder="RekaAI/reka-flash-3"
-                  />
+                <div className="mt-6 flex space-x-3">
+                  <button
+                    className={`px-4 py-2 rounded-md font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={loading || !newProvider.name || !newProvider.api_base}
+                    onClick={() => {
+                      setLoading(true);
+
+                      // In a real implementation, we would save to the API
+                      setTimeout(() => {
+                        // Update or add the provider
+                        const newProviders = [...settings.custom_providers];
+                        const existingIndex = newProviders.findIndex(p => p.id === newProvider.id);
+
+                        if (existingIndex >= 0) {
+                          // Update existing
+                          newProviders[existingIndex] = {...newProvider};
+                          setNotification({ message: `Updated provider ${newProvider.name}`, type: 'success' });
+                        } else {
+                          // Add new
+                          newProviders.push({
+                            ...newProvider,
+                            id: `custom${Date.now()}`
+                          });
+                          setNotification({ message: `Added provider ${newProvider.name}`, type: 'success' });
+                        }
+
+                        setSettings({
+                          ...settings,
+                          custom_providers: newProviders
+                        });
+
+                        // Reset form
+                        setNewProvider({
+                          id: '',
+                          name: '',
+                          api_key: '',
+                          api_base: 'https://llm.chutes.ai/v1',
+                          default_model: 'RekaAI/reka-flash-3'
+                        });
+
+                        setLoading(false);
+                      }, 1000);
+                    }}
+                  >
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <span className="ml-2">Saving...</span>
+                      </div>
+                    ) : newProvider.id ? 'Update Provider' : 'Add Provider'}
+                  </button>
+
+                  {newProvider.id && (
+                    <button
+                      className="px-4 py-2 rounded-md font-medium transition-colors border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      onClick={() => {
+                        // Reset form
+                        setNewProvider({
+                          id: '',
+                          name: '',
+                          api_key: '',
+                          api_base: 'https://llm.chutes.ai/v1',
+                          default_model: 'RekaAI/reka-flash-3'
+                        });
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
                 </div>
-              </div>
-              <div className="mt-6">
-                <button
-                  className={`px-4 py-2 rounded-md font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={loading}
-                  onClick={() => handleSaveProvider('custom')}
-                >
-                  {loading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span className="ml-2">Saving...</span>
-                    </div>
-                  ) : 'Save Custom API Settings'}
-                </button>
               </div>
             </div>
           )}

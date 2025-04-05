@@ -39,6 +39,7 @@ class Settings(SettingsInDBBase):
 
 class ProviderSettings(BaseModel):
     """Provider settings schema."""
+    name: Optional[str] = None  # Display name for the provider
     api_key: Optional[str] = None
     api_base: Optional[str] = None
     default_model: Optional[str] = None

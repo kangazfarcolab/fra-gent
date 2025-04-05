@@ -191,6 +191,9 @@ def create_chat_model_with_settings(
     Returns:
         A ChatOpenAI instance configured with the given settings.
     """
+    # Get custom provider name if available
+    custom_provider_name = provider_settings.get("custom_provider_name", "")
+
     if provider == LLMProvider.OPENAI:
         try:
             return ChatOpenAI(
@@ -225,12 +228,29 @@ def create_chat_model_with_settings(
         )
     elif provider == LLMProvider.CUSTOM:
         # Custom API host (like Chutes.ai)
+        logger.info(f"Creating custom chat model for provider: {custom_provider_name}")
+        logger.info(f"API base: {provider_settings.get('api_base')}")
+        logger.info(f"Model: {model}")
+
+        # Add custom headers based on the provider name
+        headers = {}
+
+        # Add provider-specific configurations
+        if "anthropic" in custom_provider_name.lower() or "claude" in model.lower():
+            # Anthropic/Claude specific settings
+            headers = {"anthropic-version": "2023-06-01"}
+            logger.info("Using Anthropic/Claude specific settings")
+        elif "chutes" in custom_provider_name.lower() or "reka" in model.lower():
+            # Chutes.ai/Reka specific settings
+            logger.info("Using Chutes.ai/Reka specific settings")
+
         return ChatOpenAI(
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,
             openai_api_key=provider_settings.get("api_key"),
             openai_api_base=provider_settings.get("api_base"),
+            headers=headers,
         )
     else:
         raise ValueError(f"Unsupported LLM provider: {provider}")
