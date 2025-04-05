@@ -14,6 +14,7 @@ from app.schemas.event import EventTrigger, EventResponse
 from app.schemas.memory import MemoryCreate
 from app.utils.agent import generate_agent_response
 from app.utils.memory_retrieval import build_agent_context
+from app.utils.working_memory import WorkingMemory
 
 router = APIRouter()
 
@@ -55,6 +56,13 @@ async def trigger_agent(
         db=db,
     )
 
+    # Determine memory type based on event type
+    memory_type = "permanent"
+    if event.type in ["scraping", "processing", "temporary"]:
+        memory_type = "temporary"
+    elif event.context and event.context.get("memory_type"):
+        memory_type = event.context.get("memory_type")
+
     # Create memory for this event
     memory = await crud.memory.create(
         db,
@@ -62,6 +70,7 @@ async def trigger_agent(
             agent_id=str(agent_id),
             role="user",
             content=event.content,
+            memory_type=memory_type,
             meta_data={
                 "event_type": event.type,
                 "event_source": event.source,
@@ -77,6 +86,7 @@ async def trigger_agent(
             agent_id=str(agent_id),
             role="assistant",
             content=response,
+            memory_type=memory_type,
             meta_data={
                 "event_type": event.type,
                 "event_source": "agent",
@@ -84,6 +94,26 @@ async def trigger_agent(
             },
         ),
     )
+
+    # If this is a task that generates working memory, create a summary
+    if event.context and event.context.get("working_memory"):
+        working_memory = event.context.get("working_memory")
+        if isinstance(working_memory, dict):
+            # Convert dict to WorkingMemory object
+            wm = WorkingMemory()
+            for key, value in working_memory.get("data", {}).items():
+                wm.add_data(key, value)
+            for step in working_memory.get("steps", []):
+                wm.add_step(**step)
+            for doc in working_memory.get("documents", []):
+                wm.add_document(**doc)
+            for result in working_memory.get("results", []):
+                wm.add_result(**result)
+
+            # Create permanent memories from working memory
+            permanent_memories = wm.to_permanent_memories(str(agent_id))
+            for mem_data in permanent_memories:
+                await crud.memory.create(db, obj_in=MemoryCreate(**mem_data))
 
     # Return response
     return EventResponse(

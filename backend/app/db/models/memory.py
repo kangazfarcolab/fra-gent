@@ -21,6 +21,12 @@ class Memory(Base):
     role = Column(String, nullable=False)  # user, assistant, system
     content = Column(Text, nullable=False)
 
+    # Memory type
+    # - permanent: Stored permanently in the database
+    # - temporary: Stored temporarily and periodically cleaned up
+    # - execution: Only relevant during task execution, not stored long-term
+    memory_type = Column(String, nullable=False, default="permanent")
+
     # For vector memories
     embedding = Column(ARRAY(Float), nullable=True)
 

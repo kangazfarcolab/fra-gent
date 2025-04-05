@@ -15,6 +15,7 @@ from app.api.endpoints import (
     task_templates,
     preferences,
     events,
+    memory_management,
 )
 
 api_router = APIRouter()
@@ -25,6 +26,7 @@ api_router.include_router(agents.router, prefix="/agents", tags=["agents"])
 api_router.include_router(memories.router, prefix="/agents/{agent_id}/memories", tags=["memories"])
 api_router.include_router(interactions.router, prefix="/agents/{agent_id}/interact", tags=["interactions"])
 api_router.include_router(events.router, prefix="/agents/{agent_id}/events", tags=["events"])
+api_router.include_router(memory_management.router, prefix="/memory", tags=["memory-management"])
 api_router.include_router(workflows.router, prefix="/workflows", tags=["workflows"])
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 api_router.include_router(knowledge_bases.router, prefix="/knowledge-bases", tags=["knowledge-bases"])
