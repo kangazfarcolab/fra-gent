@@ -5,7 +5,7 @@ Workflow database model.
 from sqlalchemy import Column, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
-from app.db.base import Base
+from app.db.base_class import Base
 
 
 class Workflow(Base):

@@ -3,9 +3,10 @@ Agent database model.
 """
 
 from sqlalchemy import Column, Float, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
+from sqlalchemy.orm import relationship
 
-from app.db.base import Base
+from app.db.base_class import Base
 
 
 class Agent(Base):
@@ -19,3 +20,16 @@ class Agent(Base):
     system_prompt = Column(Text, nullable=True)
     temperature = Column(Float, nullable=False, default=0.7)
     max_tokens = Column(Integer, nullable=False, default=1000)
+
+    # Additional fields
+    personality = Column(String, nullable=True)
+    bio = Column(Text, nullable=True)
+    avatar_url = Column(String, nullable=True)
+    memory_type = Column(String, default="conversation")
+    memory_window = Column(Integer, default=10)
+    knowledge_base_ids = Column(ARRAY(UUID(as_uuid=True)), nullable=True)
+    integration_settings = Column(JSONB, default={})
+    is_active = Column(Integer, default=1)
+
+    # Relationships
+    memories = relationship("Memory", back_populates="agent", cascade="all, delete-orphan")

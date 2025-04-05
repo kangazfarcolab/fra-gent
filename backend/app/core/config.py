@@ -48,8 +48,8 @@ class Settings(BaseSettings):
     # LLM Provider settings
 
     # Default Provider and Model
-    DEFAULT_PROVIDER: str = "openai"
-    DEFAULT_MODEL: str = "gpt-4"
+    DEFAULT_PROVIDER: str = "custom"
+    DEFAULT_MODEL: str = "RekaAI/reka-flash-3"
 
     # OpenAI
     OPENAI_API_KEY: Optional[str] = None
@@ -67,8 +67,8 @@ class Settings(BaseSettings):
 
     # Custom API Host
     CUSTOM_API_KEY: Optional[str] = None
-    CUSTOM_API_BASE: Optional[str] = None
-    CUSTOM_DEFAULT_MODEL: str = "claude-3-opus"
+    CUSTOM_API_BASE: str = "https://llm.chutes.ai/v1"
+    CUSTOM_DEFAULT_MODEL: str = "RekaAI/reka-flash-3"
 
     # Vector database settings
     EMBEDDING_MODEL: str = "text-embedding-3-small"

@@ -44,6 +44,7 @@ async def startup_event():
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
+        # Continue anyway to allow the API to start
 
 @app.on_event("shutdown")
 async def shutdown_event():

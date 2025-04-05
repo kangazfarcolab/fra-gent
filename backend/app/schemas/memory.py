@@ -14,7 +14,7 @@ class MemoryBase(BaseModel):
     agent_id: UUID
     role: str  # user, assistant, system
     content: str
-    metadata: Dict[str, Union[str, int, float, bool, dict]] = Field(default_factory=dict)
+    meta_data: Dict[str, Union[str, int, float, bool, dict]] = Field(default_factory=dict)
 
 
 class MemoryCreate(MemoryBase):
@@ -26,7 +26,7 @@ class MemoryUpdate(BaseModel):
     """Memory update schema."""
     role: Optional[str] = None
     content: Optional[str] = None
-    metadata: Optional[Dict[str, Union[str, int, float, bool, dict]]] = None
+    meta_data: Optional[Dict[str, Union[str, int, float, bool, dict]]] = None
 
 
 class Memory(MemoryBase):
