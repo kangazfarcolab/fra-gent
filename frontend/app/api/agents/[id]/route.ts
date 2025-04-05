@@ -81,6 +81,12 @@ export async function DELETE(
       },
     });
 
+    // Check if the response is 204 No Content (success with no body)
+    if (response.status === 204) {
+      return NextResponse.json({ success: true });
+    }
+
+    // For other non-successful responses
     if (!response.ok) {
       return NextResponse.json(
         { error: 'Failed to delete agent' },
@@ -88,8 +94,9 @@ export async function DELETE(
       );
     }
 
-    // For 204 No Content responses, just return a success message
-    return NextResponse.json({ success: true });
+    // For other successful responses with a body
+    const data = await response.json().catch(() => ({ success: true }));
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error deleting agent:', error);
     return NextResponse.json(
