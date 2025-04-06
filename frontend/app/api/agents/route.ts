@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Use backend service name for client-side API routes
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'http://backend:8000/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,11 +32,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({ error: 'Failed to create agent' }));
       return NextResponse.json(errorData, { status: response.status });
     }
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error creating agent:', error);

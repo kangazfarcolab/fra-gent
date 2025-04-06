@@ -203,16 +203,17 @@ export default function CreateAgentPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create agent');
+        const errorData = await response.json().catch(() => ({ error: 'Failed to create agent' }));
+        throw new Error(errorData.error || 'Failed to create agent');
       }
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       // Navigate back to the agents page
       router.push('/agents');
     } catch (error) {
       console.error('Error creating agent:', error);
-      alert('Failed to create agent. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to create agent. Please try again.');
     }
   };
 

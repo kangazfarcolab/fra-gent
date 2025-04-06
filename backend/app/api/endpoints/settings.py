@@ -32,10 +32,10 @@ async def get_all_settings(
 
     # Get all provider settings
     providers = {}
-    provider_keys = ["openai", "custom", "ollama", "openrouter"]
+    provider_keys = ["openai", "custom", "ollama", "openrouter", "anthropic"]
 
     for key in provider_keys:
-        provider_setting = await crud.settings.get_by_key(db, key)
+        provider_setting = await crud.settings.get_by_key(db, f"provider_{key}")
         if provider_setting:
             providers[key] = ProviderSettings(**provider_setting.value)
 
@@ -200,7 +200,7 @@ async def set_default_provider(
         )
 
     # Check if provider settings exist
-    provider_settings = await crud.settings.get_by_key(db, provider)
+    provider_settings = await crud.settings.get_by_key(db, f"provider_{provider}")
     if not provider_settings:
         raise HTTPException(
             status_code=400,

@@ -27,9 +27,78 @@ export default function SettingsBasicPage() {
   });
 
   useEffect(() => {
-    // In a real implementation, we would fetch settings from the API
-    // For now, we'll just use the default values
-    setLoading(false);
+    // Fetch settings from the API
+    const fetchSettings = async () => {
+      try {
+        setLoading(true);
+
+        try {
+          // Fetch settings from the API
+          const defaultProviderResponse = await fetch('/api/settings/all', {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (defaultProviderResponse.ok) {
+            const data = await defaultProviderResponse.json();
+            if (data && data.default_provider && data.default_provider.value) {
+              setSettings(prevSettings => ({
+                ...prevSettings,
+                default_provider: data.default_provider.value,
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching default provider:', error);
+        }
+
+        try {
+          // Fetch custom provider settings
+          const customProviderResponse = await fetch('/api/settings/provider/custom', {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (customProviderResponse.ok) {
+            const data = await customProviderResponse.json();
+            if (data && data.name && data.host) {
+              // Update providers
+              setSettings(prevSettings => ({
+                ...prevSettings,
+                providers: {
+                  ...prevSettings.providers,
+                  custom: {
+                    name: data.name,
+                    api_key: data.api_key || '',
+                    api_base: data.host || '',
+                    default_model: data.default_model || ''
+                  }
+                },
+                custom_providers: [
+                  {
+                    id: 'custom1',
+                    name: data.name,
+                    api_key: data.api_key || '',
+                    api_base: data.host || '',
+                    default_model: data.default_model || ''
+                  }
+                ]
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching custom provider:', error);
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSettings();
   }, []);
 
   // Clear notification after 5 seconds
@@ -55,22 +124,61 @@ export default function SettingsBasicPage() {
     });
   };
 
-  const handleDefaultProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleDefaultProviderChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const provider = e.target.value;
-    setSettings({
-      ...settings,
-      default_provider: provider,
-    });
-    setNotification({ message: 'Default provider updated successfully', type: 'success' });
+
+    try {
+      // Save to the API
+      const response = await fetch(`/api/settings/default-provider/${provider}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update default provider');
+      }
+
+      // Update local state
+      setSettings({
+        ...settings,
+        default_provider: provider,
+      });
+
+      setNotification({ message: 'Default provider updated successfully', type: 'success' });
+    } catch (error) {
+      console.error('Error updating default provider:', error);
+      setNotification({ message: 'Failed to update default provider', type: 'error' });
+    }
   };
 
-  const handleSaveProvider = (provider: string) => {
+  const handleSaveProvider = async (provider: string) => {
     setLoading(true);
-    // In a real implementation, we would save settings to the API
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Prepare the data for the API
+      const providerData = settings.providers[provider];
+
+      // Call the API to save the provider settings
+      const response = await fetch(`/api/settings/provider/${provider}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(providerData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save ${provider} provider settings`);
+      }
+
       setNotification({ message: `${provider.toUpperCase()} settings updated successfully`, type: 'success' });
-    }, 1000);
+    } catch (error) {
+      console.error(`Error saving ${provider} provider settings:`, error);
+      setNotification({ message: `Failed to save ${provider} provider settings`, type: 'error' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -239,15 +347,40 @@ export default function SettingsBasicPage() {
                           <h4 className="text-md font-semibold">{provider.name}</h4>
                           <button
                             className="text-red-600 hover:text-red-800 text-sm"
-                            onClick={() => {
-                              // Remove provider
-                              const newProviders = [...settings.custom_providers];
-                              newProviders.splice(index, 1);
-                              setSettings({
-                                ...settings,
-                                custom_providers: newProviders
-                              });
-                              setNotification({ message: `Removed provider ${provider.name}`, type: 'success' });
+                            onClick={async () => {
+                              if (confirm(`Are you sure you want to delete the provider "${provider.name}"? This cannot be undone.`)) {
+                                try {
+                                  // Delete from the backend
+                                  const response = await fetch('/api/settings/provider/custom', {
+                                    method: 'DELETE',
+                                  });
+
+                                  if (!response.ok) {
+                                    throw new Error('Failed to delete custom provider');
+                                  }
+
+                                  // Remove from local state
+                                  const newProviders = [...settings.custom_providers];
+                                  newProviders.splice(index, 1);
+                                  setSettings({
+                                    ...settings,
+                                    custom_providers: newProviders,
+                                    providers: {
+                                      ...settings.providers,
+                                      custom: {
+                                        name: '',
+                                        api_key: '',
+                                        api_base: '',
+                                        default_model: ''
+                                      }
+                                    }
+                                  });
+                                  setNotification({ message: `Removed provider ${provider.name}`, type: 'success' });
+                                } catch (error) {
+                                  console.error('Error deleting custom provider:', error);
+                                  setNotification({ message: 'Failed to delete custom provider', type: 'error' });
+                                }
+                              }
                             }}
                           >
                             Remove
@@ -447,8 +580,8 @@ export default function SettingsBasicPage() {
                           id: '',
                           name: '',
                           api_key: '',
-                          api_base: 'https://llm.chutes.ai/v1',
-                          default_model: 'RekaAI/reka-flash-3'
+                          api_base: '',
+                          default_model: ''
                         });
                       }}
                     >
