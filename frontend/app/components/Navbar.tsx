@@ -11,6 +11,7 @@ const Navbar: React.FC = () => {
   const navItems = [
     { name: 'Home', path: '/' },
     { name: 'Agents', path: '/agents' },
+    { name: 'Workflows', path: '/workflows' },
     { name: 'Settings', path: '/settings-basic' },
   ];
 
@@ -45,7 +46,7 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Mobile menu, show/hide based on menu state */}
       <div className="sm:hidden">
         <div className="pt-2 pb-3 space-y-1">
