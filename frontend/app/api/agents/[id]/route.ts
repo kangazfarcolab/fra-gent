@@ -50,13 +50,14 @@ export async function PUT(
     });
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to update agent' }));
       return NextResponse.json(
-        { error: 'Failed to update agent' },
+        errorData,
         { status: response.status }
       );
     }
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error updating agent:', error);

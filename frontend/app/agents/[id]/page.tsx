@@ -135,6 +135,12 @@ export default function AgentDetailsPage() {
             >
               Chat
             </Link>
+            <Link
+              href={`/agents/${agentId}/edit`}
+              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+            >
+              Edit
+            </Link>
             <button
               onClick={openDeleteModal}
               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
