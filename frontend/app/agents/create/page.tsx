@@ -49,8 +49,79 @@ export default function CreateAgentPage() {
     avatar_url: '',
     memory_type: 'conversation',
     memory_window: 10,
-    provider: 'openai',
+    provider: '', // This will be updated from settings
   });
+
+  // Fetch default provider from settings
+  useEffect(() => {
+    const fetchDefaultProvider = async () => {
+      try {
+        // First, log the initial state
+        console.log('Initial provider state:', formState.provider);
+
+        // Add a cache-busting parameter to ensure we're not getting cached responses
+        const response = await fetch(`/api/settings/all?_=${Date.now()}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Settings data:', data); // Debug log
+
+          // The default_provider might be a string or an object with a value property
+          if (data && data.default_provider) {
+            // Extract the provider value, handling both string and object formats
+            let provider = data.default_provider;
+            if (typeof provider === 'object' && provider.value) {
+              provider = provider.value;
+            }
+            console.log('Default provider found:', provider); // Debug log
+
+            // Only update if it's a valid provider
+            if (provider && provider !== '' &&
+                ['openai', 'anthropic', 'openrouter', 'ollama', 'custom'].includes(provider)) {
+
+              setFormState(prevState => {
+                const newState = {
+                  ...prevState,
+                  provider: provider,
+                  // Set default model based on provider
+                  model: getDefaultModelForProvider(provider)
+                };
+                console.log('Updated form state:', newState);
+                return newState;
+              });
+            } else {
+              console.log('Invalid provider value:', provider);
+            }
+          } else {
+            console.log('No default provider found in settings data');
+          }
+        } else {
+          console.log('Failed to fetch settings, status:', response.status);
+        }
+      } catch (error) {
+        console.error('Error fetching default provider:', error);
+      }
+    };
+
+    fetchDefaultProvider();
+  }, []);
+
+  // Helper function to get default model for a provider
+  const getDefaultModelForProvider = (provider: string): string => {
+    switch (provider) {
+      case 'openai':
+        return 'gpt-4';
+      case 'anthropic':
+        return 'claude-3-opus-20240229';
+      case 'openrouter':
+        return 'openai/gpt-3.5-turbo';
+      case 'ollama':
+        return 'llama2';
+      case 'custom':
+        return '';
+      default:
+        return 'gpt-4';
+    }
+  };
 
   // Load custom providers from settings
   useEffect(() => {

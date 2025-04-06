@@ -5,6 +5,23 @@
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 255, 255, 255;
+  --primary-color: #3b82f6;
+  --secondary-color: #10b981;
+  --border-color: #d1d5db;
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
+  --input-text: #111827;
+}
+
+.dark {
+  --foreground-rgb: 225, 225, 225;
+  --background-rgb: 18, 18, 18;
+  --primary-color: #BB86FC;
+  --secondary-color: #03DAC6;
+  --border-color: #333333;
+  --card-bg: #1E1E1E;
+  --input-bg: #2d2d2d;
+  --input-text: #E1E1E1;
 }
 
 body {
@@ -14,16 +31,35 @@ body {
 
 /* Fix for input fields */
 input, textarea, select {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
   border-radius: 0.375rem;
   padding: 0.5rem 0.75rem;
   width: 100%;
-  color: #111827;
-  background-color: white;
+  color: var(--input-text);
+  background-color: var(--input-bg);
 }
 
 input:focus, textarea:focus, select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color), 0.25);
+}
+
+/* Card styles */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: white;
 }

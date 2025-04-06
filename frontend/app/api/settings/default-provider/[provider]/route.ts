@@ -10,7 +10,8 @@ export async function POST(
   try {
     const provider = params.provider;
 
-    const response = await fetch(`${API_URL}/settings/default-provider/${provider}`, {
+    // Add a cache-busting parameter to ensure we're not getting cached responses
+    const response = await fetch(`${API_URL}/settings/default-provider/${provider}?_=${Date.now()}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -25,6 +26,7 @@ export async function POST(
     }
 
     const data = await response.json();
+    console.log('Default provider API response:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error setting default provider:', error);

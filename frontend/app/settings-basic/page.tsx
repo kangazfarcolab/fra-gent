@@ -15,7 +15,7 @@ export default function SettingsBasicPage() {
     default_model: ''
   });
   const [settings, setSettings] = useState({
-    default_provider: 'openai',
+    default_provider: '',
     providers: {
       openai: { name: 'OpenAI', api_key: '', api_base: 'https://api.openai.com/v1', default_model: 'gpt-4' },
       custom: { name: 'Custom API', api_key: '', api_base: '', default_model: '' },
@@ -34,7 +34,8 @@ export default function SettingsBasicPage() {
 
         try {
           // Fetch settings from the API
-          const defaultProviderResponse = await fetch('/api/settings/all', {
+          // Add a cache-busting parameter to ensure we're not getting cached responses
+          const defaultProviderResponse = await fetch(`/api/settings/all?_=${Date.now()}`, {
             headers: {
               'Content-Type': 'application/json',
             },
@@ -42,11 +43,22 @@ export default function SettingsBasicPage() {
 
           if (defaultProviderResponse.ok) {
             const data = await defaultProviderResponse.json();
-            if (data && data.default_provider && data.default_provider.value) {
+            console.log('Settings data:', data); // Debug log
+
+            // The default_provider might be a string or an object with a value property
+            if (data && data.default_provider) {
+              // Extract the provider value, handling both string and object formats
+              let provider = data.default_provider;
+              if (typeof provider === 'object' && provider.value) {
+                provider = provider.value;
+              }
+              console.log('Default provider found:', provider);
               setSettings(prevSettings => ({
                 ...prevSettings,
-                default_provider: data.default_provider.value,
+                default_provider: provider,
               }));
+            } else {
+              console.log('No default provider in response');
             }
           }
         } catch (error) {
@@ -128,8 +140,16 @@ export default function SettingsBasicPage() {
     const provider = e.target.value;
 
     try {
+      // Check if the provider is configured
+      const providerConfig = settings.providers[provider as keyof typeof settings.providers];
+      if (!providerConfig || !providerConfig.api_key) {
+        setNotification({ message: `Provider ${provider} is not configured. Please configure it first.`, type: 'error' });
+        return;
+      }
+
       // Save to the API
-      const response = await fetch(`/api/settings/default-provider/${provider}`, {
+      // Add a cache-busting parameter to ensure we're not getting cached responses
+      const response = await fetch(`/api/settings/default-provider/${provider}?_=${Date.now()}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,8 +157,13 @@ export default function SettingsBasicPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update default provider');
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        throw new Error(errorData.detail || 'Failed to update default provider');
       }
+
+      const data = await response.json();
+      console.log('Default provider updated:', data); // Debug log
 
       // Update local state
       setSettings({
@@ -149,7 +174,7 @@ export default function SettingsBasicPage() {
       setNotification({ message: 'Default provider updated successfully', type: 'success' });
     } catch (error) {
       console.error('Error updating default provider:', error);
-      setNotification({ message: 'Failed to update default provider', type: 'error' });
+      setNotification({ message: `Failed to update default provider: ${error instanceof Error ? error.message : 'Unknown error'}`, type: 'error' });
     }
   };
 
@@ -191,13 +216,10 @@ export default function SettingsBasicPage() {
 
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold">Settings</h1>
-        <Link href="/" className="text-blue-600 hover:text-blue-800">
-          Back to Home
-        </Link>
       </div>
       <div className="h-px bg-gray-200 mb-6"></div>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white dark:bg-dark-surface rounded-lg shadow-md overflow-hidden">
         <div className="border-b border-gray-200">
           <div className="flex">
             <button
